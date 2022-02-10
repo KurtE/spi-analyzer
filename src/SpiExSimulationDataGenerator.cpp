@@ -33,6 +33,11 @@ void SpiExSimulationDataGenerator::Initialize( U32 simulation_sample_rate, SpiEx
 	else
 		mEnable = NULL;
 
+	if (settings->mDCChannel != UNDEFINED_CHANNEL)
+		mEnable = mSpiSimulationChannels.Add(settings->mDCChannel, mSimulationSampleRateHz, BIT_HIGH);
+	else
+		mEnable = NULL;
+
 	mSpiSimulationChannels.AdvanceAll( mClockGenerator.AdvanceByHalfPeriod( 10.0 ) ); //insert 10 bit-periods of idle
 
 	mValue = 0;

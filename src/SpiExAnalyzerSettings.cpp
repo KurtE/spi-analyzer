@@ -48,7 +48,7 @@ SpiExAnalyzerSettings::SpiExAnalyzerSettings()
 
 	mBitsPerTransferInterface.reset( new AnalyzerSettingInterfaceNumberList() );
 	mBitsPerTransferInterface->SetTitleAndTooltip( "Bits per Transfer", "" );
-	for( U32 i=1; i<=64; i++ )
+	for( U32 i=1; i<=63; i++ )
 	{
 		std::stringstream ss;
 
@@ -165,8 +165,8 @@ void SpiExAnalyzerSettings::LoadSettings( const char* settings )
 
 	const char* name_string;	//the first thing in the archive is the name of the protocol analyzer that the data belongs to.
 	text_archive >> &name_string;
-	if( strcmp( name_string, "SaleaeSpiAnalyzer" ) != 0 )
-		AnalyzerHelpers::Assert( "SaleaeSpiAnalyzer: Provided with a settings string that doesn't belong to us;" );
+	if( strcmp( name_string, "SpiExAnalyzer" ) != 0 )
+		AnalyzerHelpers::Assert( "SpiExAnalyzer: Provided with a settings string that doesn't belong to us;" );
 
 	text_archive >>  mMosiChannel;
 	text_archive >>  mMisoChannel;
@@ -197,7 +197,7 @@ const char* SpiExAnalyzerSettings::SaveSettings()
 {
 	SimpleArchive text_archive;
 
-	text_archive << "SaleaeSpiAnalyzer";
+	text_archive << "SpiExAnalyzer";
 	text_archive <<  mMosiChannel;
 	text_archive <<  mMisoChannel;
 	text_archive <<  mClockChannel;

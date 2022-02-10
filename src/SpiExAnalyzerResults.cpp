@@ -18,25 +18,33 @@ SpiExAnalyzerResults::~SpiExAnalyzerResults()
 {
 }
 
-void SpiExAnalyzerResults::GenerateBubbleText( U64 frame_index, Channel& channel, DisplayBase display_base )  //unrefereced vars commented out to remove warnings.
+void SpiExAnalyzerResults::GenerateBubbleText(U64 frame_index, Channel& channel, DisplayBase display_base)  //unrefereced vars commented out to remove warnings.
 {
 	ClearResultStrings();
-	Frame frame = GetFrame( frame_index );
+	Frame frame = GetFrame(frame_index);
 
-	if( ( frame.mFlags & SPI_ERROR_FLAG ) == 0 )
+	if ((frame.mFlags & SPI_ERROR_FLAG) == 0)
 	{
-		if( channel == mSettings->mMosiChannel )
+		if (channel == mSettings->mMosiChannel)
 		{
 			char number_str[128];
-			AnalyzerHelpers::GetNumberString( frame.mData1, display_base, mSettings->mBitsPerTransfer, number_str, 128 );
-			AddResultString( number_str );
-		}else
-		{
-			char number_str[128];
-			AnalyzerHelpers::GetNumberString( frame.mData2, display_base, mSettings->mBitsPerTransfer, number_str, 128 );
-			AddResultString( number_str );
+			AnalyzerHelpers::GetNumberString(frame.mData1, display_base, mSettings->mBitsPerTransfer, number_str, 128);
+			AddResultString(number_str);
 		}
-	}else
+		else if (channel == mSettings->mMisoChannel)
+		{
+			char number_str[128];
+			AnalyzerHelpers::GetNumberString(frame.mData2 & 0x7fffffffffffffffull, display_base, mSettings->mBitsPerTransfer, number_str, 128);
+			AddResultString(number_str);
+		}
+		else if (channel == mSettings->mDCChannel)
+		{
+			char number_str[128];
+			AnalyzerHelpers::GetNumberString(frame.mData2 >> 63, display_base, 1, number_str, 128);
+			AddResultString(number_str);
+		}
+	}
+	else
 	{
 			AddResultString( "Error" );
 			AddResultString( "Settings mismatch" );
@@ -87,11 +95,11 @@ void SpiExAnalyzerResults::GenerateExportFile( const char* file, DisplayBase dis
 
 		char miso_str[128] = "";
 		if( miso_used == true )
-			AnalyzerHelpers::GetNumberString( frame.mData2, display_base, mSettings->mBitsPerTransfer, miso_str, 128 );
+			AnalyzerHelpers::GetNumberString( frame.mData2 & 0x7fffffffffffffffull, display_base, mSettings->mBitsPerTransfer, miso_str, 128 );
 
 		char dc_str[128] = "";
 		if (dc_used == true)
-			AnalyzerHelpers::GetNumberString((frame.mFlags & SPI_DC_FLAG)? 1 : 0, display_base, mSettings->mBitsPerTransfer, miso_str, 128);
+			AnalyzerHelpers::GetNumberString( frame.mData2 >> 63, display_base, 1, miso_str, 128);
 
 		U64 packet_id = GetPacketContainingFrameSequential( i ); 
 		if( packet_id != INVALID_RESULT_INDEX )
@@ -99,7 +107,7 @@ void SpiExAnalyzerResults::GenerateExportFile( const char* file, DisplayBase dis
 		else
 			ss << time_str << ",," << mosi_str << "," << miso_str << "," << dc_str << std::endl;  //it's ok for a frame not to be included in a packet.
 	
-		AnalyzerHelpers::AppendToFile( (U8*)ss.str().c_str(), ss.str().length(), f );
+		AnalyzerHelpers::AppendToFile( (U8*)ss.str().c_str(), (U32)ss.str().length(), f );
 		ss.str( std::string() );
 							
 		if( UpdateExportProgressAndCheckForCancel( i, num_frames ) == true )
@@ -142,9 +150,9 @@ void SpiExAnalyzerResults::GenerateFrameTabularText( U64 frame_index, DisplayBas
         if( mosi_used == true )
             AnalyzerHelpers::GetNumberString( frame.mData1, display_base, mSettings->mBitsPerTransfer, mosi_str, 128 );
         if( miso_used == true )
-            AnalyzerHelpers::GetNumberString( frame.mData2, display_base, mSettings->mBitsPerTransfer, miso_str, 128 );
+            AnalyzerHelpers::GetNumberString( frame.mData2 & 0x7fffffffffffffffull, display_base, mSettings->mBitsPerTransfer, miso_str, 128 );
 		if (dc_used == true)
-			AnalyzerHelpers::GetNumberString((frame.mFlags & SPI_DC_FLAG) ? 1 : 0, display_base, mSettings->mBitsPerTransfer, miso_str, 128);
+			AnalyzerHelpers::GetNumberString(frame.mData2 >> 63, display_base, 1, dc_str, 128);
 
 		bool field_output = false;
 		if (mosi_used == true)

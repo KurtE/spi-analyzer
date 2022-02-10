@@ -32,5 +32,6 @@ protected: //SPI specific
 	SimulationChannelDescriptor* mMosi;
 	SimulationChannelDescriptor* mClock;
 	SimulationChannelDescriptor* mEnable;
+	SimulationChannelDescriptor* mDC;
 };
 #endif //SPI_SIMULATION_DATA_GENERATOR

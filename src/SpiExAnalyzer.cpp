@@ -14,7 +14,10 @@ SpiExAnalyzer::SpiExAnalyzer()
 	mMiso( NULL ),
 	mClock( NULL ),
 	mEnable( NULL ),
-	mDC (NULL)
+	mDC (NULL),
+	mCurrentSample( 0 ),
+	mArrowMarker (AnalyzerResults::Dot)
+
 {	
 	SetAnalyzerSettings( mSettings.get() );
 }
@@ -96,12 +99,6 @@ void SpiExAnalyzer::Setup()
 	else
 		mMiso = NULL;
 
-	if (mSettings->mDCChannel != UNDEFINED_CHANNEL)
-		mDC = GetAnalyzerChannelData(mSettings->mDCChannel);
-	else
-		mDC = NULL;
-
-
 	mClock = GetAnalyzerChannelData( mSettings->mClockChannel );
 
 	if( mSettings->mEnableChannel != UNDEFINED_CHANNEL )
@@ -109,6 +106,10 @@ void SpiExAnalyzer::Setup()
 	else
 		mEnable = NULL;
 
+	if (mSettings->mDCChannel != UNDEFINED_CHANNEL)
+		mDC = GetAnalyzerChannelData(mSettings->mDCChannel);
+	else
+		mDC = NULL;
 }
 
 void SpiExAnalyzer::AdvanceToActiveEnableEdge()
@@ -196,7 +197,7 @@ void SpiExAnalyzer::GetWord()
 
 	DataBuilder dc_result;
 	U64 dc_word = 0;
-	dc_result.Reset(&dc_word, mSettings->mShiftOrder, bits_per_transfer);
+	dc_result.Reset(&dc_word, mSettings->mShiftOrder, 1);
 
 
 	U64 first_sample = 0;
@@ -295,7 +296,7 @@ void SpiExAnalyzer::GetWord()
 	}
 
 	//save the resuls:
-	U32 count = mArrowLocations.size();
+	U32 count = (U32)mArrowLocations.size();
 	for( U32 i=0; i<count; i++ )
 		mResults->AddMarker( mArrowLocations[i], mArrowMarker, mSettings->mClockChannel );
 
@@ -305,7 +306,10 @@ void SpiExAnalyzer::GetWord()
 	result_frame.mData1 = mosi_word;
 	result_frame.mData2 = miso_word;
 	result_frame.mFlags = 0;
-	if (dc_word) result_frame.mFlags = SPI_DC_FLAG;
+	if (dc_word) {
+		//result_frame.mFlags = SPI_DC_FLAG;
+		result_frame.mData2 |= 0x8000000000000000ull;
+	}
 	mResults->AddFrame( result_frame );
 	
 	mResults->CommitResults();
