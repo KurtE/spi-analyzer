@@ -1,14 +1,15 @@
-#include "SpiAnalyzerSettings.h"
+#include "SpiExAnalyzerSettings.h"
 
 #include <AnalyzerHelpers.h>
 #include <sstream>
 #include <cstring>
 
-SpiAnalyzerSettings::SpiAnalyzerSettings()
+SpiExAnalyzerSettings::SpiExAnalyzerSettings()
 :	mMosiChannel( UNDEFINED_CHANNEL ),
 	mMisoChannel( UNDEFINED_CHANNEL ),
 	mClockChannel( UNDEFINED_CHANNEL ),
 	mEnableChannel( UNDEFINED_CHANNEL ),
+	mDCChannel(UNDEFINED_CHANNEL),
 	mShiftOrder( AnalyzerEnums::MsbFirst ),
 	mBitsPerTransfer( 8 ),
 	mClockInactiveState( BIT_LOW ),
@@ -33,6 +34,11 @@ SpiAnalyzerSettings::SpiAnalyzerSettings()
 	mEnableChannelInterface->SetTitleAndTooltip( "Enable", "Enable (SS, Slave Select)" );
 	mEnableChannelInterface->SetChannel( mEnableChannel );
 	mEnableChannelInterface->SetSelectionOfNoneIsAllowed( true );
+
+	mDCChannelInterface.reset(new AnalyzerSettingInterfaceChannel());
+	mDCChannelInterface->SetTitleAndTooltip("DC", "Data/Command");
+	mDCChannelInterface->SetChannel(mDCChannel);
+	mDCChannelInterface->SetSelectionOfNoneIsAllowed(true);
 
 	mShiftOrderInterface.reset( new AnalyzerSettingInterfaceNumberList() );
 	mShiftOrderInterface->SetTitleAndTooltip( "Significant Bit", "" );
@@ -78,6 +84,7 @@ SpiAnalyzerSettings::SpiAnalyzerSettings()
 	AddInterface( mMisoChannelInterface.get() );
 	AddInterface( mClockChannelInterface.get() );
 	AddInterface( mEnableChannelInterface.get() );
+	AddInterface( mDCChannelInterface.get());
 	AddInterface( mShiftOrderInterface.get() );
 	AddInterface( mBitsPerTransferInterface.get() );
 	AddInterface( mClockInactiveStateInterface.get() );
@@ -95,24 +102,27 @@ SpiAnalyzerSettings::SpiAnalyzerSettings()
 	AddChannel( mMisoChannel, "MISO", false );
 	AddChannel( mClockChannel, "CLOCK", false );
 	AddChannel( mEnableChannel, "ENABLE", false );
+	AddChannel( mDCChannel, "DC", false);
 }
 
-SpiAnalyzerSettings::~SpiAnalyzerSettings()
+SpiExAnalyzerSettings::~SpiExAnalyzerSettings()
 {
 }
 
-bool SpiAnalyzerSettings::SetSettingsFromInterfaces()
+bool SpiExAnalyzerSettings::SetSettingsFromInterfaces()
 {
 	Channel mosi = mMosiChannelInterface->GetChannel();
 	Channel miso = mMisoChannelInterface->GetChannel();
 	Channel clock = mClockChannelInterface->GetChannel();
 	Channel enable = mEnableChannelInterface->GetChannel();
+	Channel dc = mDCChannelInterface->GetChannel();
 
 	std::vector<Channel> channels;
 	channels.push_back( mosi );
 	channels.push_back( miso );
 	channels.push_back( clock );
 	channels.push_back( enable );
+	channels.push_back(dc);
 
 	if( AnalyzerHelpers::DoChannelsOverlap( &channels[0], channels.size() ) == true )
 	{
@@ -130,6 +140,7 @@ bool SpiAnalyzerSettings::SetSettingsFromInterfaces()
 	mMisoChannel = mMisoChannelInterface->GetChannel();
 	mClockChannel = mClockChannelInterface->GetChannel();
 	mEnableChannel = mEnableChannelInterface->GetChannel();
+	mDCChannel = mDCChannelInterface->GetChannel();
 
 	mShiftOrder =			(AnalyzerEnums::ShiftOrder) U32( mShiftOrderInterface->GetNumber() );
 	mBitsPerTransfer =		U32( mBitsPerTransferInterface->GetNumber() );
@@ -142,11 +153,12 @@ bool SpiAnalyzerSettings::SetSettingsFromInterfaces()
 	AddChannel( mMisoChannel, "MISO", mMisoChannel != UNDEFINED_CHANNEL );
 	AddChannel( mClockChannel, "CLOCK", mClockChannel != UNDEFINED_CHANNEL );
 	AddChannel( mEnableChannel, "ENABLE", mEnableChannel != UNDEFINED_CHANNEL );
+	AddChannel( mDCChannel, "DC", mDCChannel != UNDEFINED_CHANNEL);
 
 	return true;
 }
 
-void SpiAnalyzerSettings::LoadSettings( const char* settings )
+void SpiExAnalyzerSettings::LoadSettings( const char* settings )
 {
 	SimpleArchive text_archive;
 	text_archive.SetString( settings );
@@ -160,6 +172,7 @@ void SpiAnalyzerSettings::LoadSettings( const char* settings )
 	text_archive >>  mMisoChannel;
 	text_archive >>  mClockChannel;
 	text_archive >>  mEnableChannel;
+	text_archive >> mDCChannel;
 	text_archive >>  *(U32*)&mShiftOrder;
 	text_archive >>  mBitsPerTransfer;
 	text_archive >>  *(U32*)&mClockInactiveState;
@@ -175,11 +188,12 @@ void SpiAnalyzerSettings::LoadSettings( const char* settings )
 	AddChannel( mMisoChannel, "MISO", mMisoChannel != UNDEFINED_CHANNEL );
 	AddChannel( mClockChannel, "CLOCK", mClockChannel != UNDEFINED_CHANNEL );
 	AddChannel( mEnableChannel, "ENABLE", mEnableChannel != UNDEFINED_CHANNEL );
+	AddChannel(mDCChannel, "DC", mDCChannel != UNDEFINED_CHANNEL);
 
 	UpdateInterfacesFromSettings();
 }
 
-const char* SpiAnalyzerSettings::SaveSettings()
+const char* SpiExAnalyzerSettings::SaveSettings()
 {
 	SimpleArchive text_archive;
 
@@ -188,6 +202,7 @@ const char* SpiAnalyzerSettings::SaveSettings()
 	text_archive <<  mMisoChannel;
 	text_archive <<  mClockChannel;
 	text_archive <<  mEnableChannel;
+	text_archive << mDCChannel;
 	text_archive <<  mShiftOrder;
 	text_archive <<  mBitsPerTransfer;
 	text_archive <<  mClockInactiveState;
@@ -197,12 +212,13 @@ const char* SpiAnalyzerSettings::SaveSettings()
 	return SetReturnString( text_archive.GetString() );
 }
 
-void SpiAnalyzerSettings::UpdateInterfacesFromSettings()
+void SpiExAnalyzerSettings::UpdateInterfacesFromSettings()
 {
 	mMosiChannelInterface->SetChannel( mMosiChannel );
 	mMisoChannelInterface->SetChannel( mMisoChannel );
 	mClockChannelInterface->SetChannel( mClockChannel );
 	mEnableChannelInterface->SetChannel( mEnableChannel );
+	mDCChannelInterface->SetChannel(mDCChannel);
 	mShiftOrderInterface->SetNumber( mShiftOrder );
 	mBitsPerTransferInterface->SetNumber( mBitsPerTransfer );
 	mClockInactiveStateInterface->SetNumber( mClockInactiveState );

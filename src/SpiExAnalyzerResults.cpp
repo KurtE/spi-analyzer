@@ -1,24 +1,24 @@
-#include "SpiAnalyzerResults.h"
+#include "SpiExAnalyzerResults.h"
 #include <AnalyzerHelpers.h>
-#include "SpiAnalyzer.h"
-#include "SpiAnalyzerSettings.h"
+#include "SpiExAnalyzer.h"
+#include "SpiExAnalyzerSettings.h"
 #include <iostream>
 #include <sstream>
 
 #pragma warning(disable: 4996) //warning C4996: 'sprintf': This function or variable may be unsafe. Consider using sprintf_s instead.
 
-SpiAnalyzerResults::SpiAnalyzerResults( SpiAnalyzer* analyzer, SpiAnalyzerSettings* settings )
+SpiExAnalyzerResults::SpiExAnalyzerResults( SpiExAnalyzer* analyzer, SpiExAnalyzerSettings* settings )
 :	AnalyzerResults(),
 	mSettings( settings ),
 	mAnalyzer( analyzer )
 {
 }
 
-SpiAnalyzerResults::~SpiAnalyzerResults()
+SpiExAnalyzerResults::~SpiExAnalyzerResults()
 {
 }
 
-void SpiAnalyzerResults::GenerateBubbleText( U64 frame_index, Channel& channel, DisplayBase display_base )  //unrefereced vars commented out to remove warnings.
+void SpiExAnalyzerResults::GenerateBubbleText( U64 frame_index, Channel& channel, DisplayBase display_base )  //unrefereced vars commented out to remove warnings.
 {
 	ClearResultStrings();
 	Frame frame = GetFrame( frame_index );
@@ -44,7 +44,7 @@ void SpiAnalyzerResults::GenerateBubbleText( U64 frame_index, Channel& channel, 
 	}
 }
 
-void SpiAnalyzerResults::GenerateExportFile( const char* file, DisplayBase display_base, U32 /*export_type_user_id*/ )
+void SpiExAnalyzerResults::GenerateExportFile( const char* file, DisplayBase display_base, U32 /*export_type_user_id*/ )
 {
 	//export_type_user_id is only important if we have more than one export type.
 
@@ -55,16 +55,20 @@ void SpiAnalyzerResults::GenerateExportFile( const char* file, DisplayBase displ
 	U64 trigger_sample = mAnalyzer->GetTriggerSample();
 	U32 sample_rate = mAnalyzer->GetSampleRate();
 
-	ss << "Time [s],Packet ID,MOSI,MISO" << std::endl;
+	ss << "Time [s],Packet ID,MOSI,MISO,DC" << std::endl;
 
 	bool mosi_used = true;
 	bool miso_used = true;
+	bool dc_used = true;
 
 	if( mSettings->mMosiChannel == UNDEFINED_CHANNEL )
 		mosi_used = false;
 
 	if( mSettings->mMisoChannel == UNDEFINED_CHANNEL )
 		miso_used = false;
+
+	if (mSettings->mDCChannel == UNDEFINED_CHANNEL)
+		dc_used = false;
 
 	U64 num_frames = GetNumFrames();
 	for( U32 i=0; i < num_frames; i++ )
@@ -85,11 +89,15 @@ void SpiAnalyzerResults::GenerateExportFile( const char* file, DisplayBase displ
 		if( miso_used == true )
 			AnalyzerHelpers::GetNumberString( frame.mData2, display_base, mSettings->mBitsPerTransfer, miso_str, 128 );
 
+		char dc_str[128] = "";
+		if (dc_used == true)
+			AnalyzerHelpers::GetNumberString((frame.mFlags & SPI_DC_FLAG)? 1 : 0, display_base, mSettings->mBitsPerTransfer, miso_str, 128);
+
 		U64 packet_id = GetPacketContainingFrameSequential( i ); 
 		if( packet_id != INVALID_RESULT_INDEX )
-			ss << time_str << "," << packet_id << "," << mosi_str << "," << miso_str << std::endl;
+			ss << time_str << "," << packet_id << "," << mosi_str << "," << miso_str << "," << dc_str << std::endl;
 		else
-			ss << time_str << ",," << mosi_str << "," << miso_str << std::endl;  //it's ok for a frame not to be included in a packet.
+			ss << time_str << ",," << mosi_str << "," << miso_str << "," << dc_str << std::endl;  //it's ok for a frame not to be included in a packet.
 	
 		AnalyzerHelpers::AppendToFile( (U8*)ss.str().c_str(), ss.str().length(), f );
 		ss.str( std::string() );
@@ -105,13 +113,14 @@ void SpiAnalyzerResults::GenerateExportFile( const char* file, DisplayBase displ
 	AnalyzerHelpers::EndFile( f );
 }
 
-void SpiAnalyzerResults::GenerateFrameTabularText( U64 frame_index, DisplayBase display_base )
+void SpiExAnalyzerResults::GenerateFrameTabularText( U64 frame_index, DisplayBase display_base )
 {
     ClearTabularText();
 	Frame frame = GetFrame( frame_index );
 
 	bool mosi_used = true;
 	bool miso_used = true;
+	bool dc_used = true;
 
 	if( mSettings->mMosiChannel == UNDEFINED_CHANNEL )
 		mosi_used = false;
@@ -119,8 +128,12 @@ void SpiAnalyzerResults::GenerateFrameTabularText( U64 frame_index, DisplayBase 
 	if( mSettings->mMisoChannel == UNDEFINED_CHANNEL )
 		miso_used = false;
 
+	if (mSettings->mDCChannel == UNDEFINED_CHANNEL)
+		dc_used = false;
+
 	char mosi_str[128];
     char miso_str[128];
+	char dc_str[128];
 
     std::stringstream ss;
 
@@ -130,20 +143,26 @@ void SpiAnalyzerResults::GenerateFrameTabularText( U64 frame_index, DisplayBase 
             AnalyzerHelpers::GetNumberString( frame.mData1, display_base, mSettings->mBitsPerTransfer, mosi_str, 128 );
         if( miso_used == true )
             AnalyzerHelpers::GetNumberString( frame.mData2, display_base, mSettings->mBitsPerTransfer, miso_str, 128 );
+		if (dc_used == true)
+			AnalyzerHelpers::GetNumberString((frame.mFlags & SPI_DC_FLAG) ? 1 : 0, display_base, mSettings->mBitsPerTransfer, miso_str, 128);
 
-        if( mosi_used == true && miso_used == true )
-        {
-            ss << "MOSI: " << mosi_str << ";  MISO: " << miso_str;
-        }else
-        {
-            if( mosi_used == true )
-            {
-                ss << "MOSI: " << mosi_str;
-            }else
-            {
-                ss << "MISO: " << miso_str;
-            }
-        }
+		bool field_output = false;
+		if (mosi_used == true)
+		{
+			ss << "MOSI: " << mosi_str;
+			field_output = true;
+		}
+		if (miso_used == true)
+		{
+			if (field_output) ss << ";  MISO: " << miso_str;
+			else ss << "MISO: " << miso_str;
+			field_output = true;
+		}
+		if (dc_used == true)
+		{
+			if (field_output) ss << ";  DC: " << dc_str;
+			else ss << "DC: " << dc_str;
+		}
     }
     else
     {
@@ -153,13 +172,13 @@ void SpiAnalyzerResults::GenerateFrameTabularText( U64 frame_index, DisplayBase 
 	AddTabularText( ss.str().c_str() );
 }
 
-void SpiAnalyzerResults::GeneratePacketTabularText( U64 /*packet_id*/, DisplayBase /*display_base*/ )  //unrefereced vars commented out to remove warnings.
+void SpiExAnalyzerResults::GeneratePacketTabularText( U64 /*packet_id*/, DisplayBase /*display_base*/ )  //unrefereced vars commented out to remove warnings.
 {
 	ClearResultStrings();
 	AddResultString( "not supported" );
 }
 
-void SpiAnalyzerResults::GenerateTransactionTabularText( U64 /*transaction_id*/, DisplayBase /*display_base*/ )  //unrefereced vars commented out to remove warnings.
+void SpiExAnalyzerResults::GenerateTransactionTabularText( U64 /*transaction_id*/, DisplayBase /*display_base*/ )  //unrefereced vars commented out to remove warnings.
 {
 	ClearResultStrings();
 	AddResultString( "not supported" );

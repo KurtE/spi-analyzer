@@ -2,15 +2,15 @@
 #define SPI_ANALYZER_H
 
 #include <Analyzer.h>
-#include "SpiAnalyzerResults.h"
-#include "SpiSimulationDataGenerator.h"
+#include "SpiExAnalyzerResults.h"
+#include "SpiExSimulationDataGenerator.h"
 
-class SpiAnalyzerSettings;
-class SpiAnalyzer : public Analyzer2
+class SpiExAnalyzerSettings;
+class SpiExAnalyzer : public Analyzer2
 {
 public:
-	SpiAnalyzer();
-	virtual ~SpiAnalyzer();
+	SpiExAnalyzer();
+	virtual ~SpiExAnalyzer();
 	virtual void SetupResults();
 	virtual void WorkerThread();
 
@@ -31,15 +31,16 @@ protected: //functions
 #pragma warning( push )
 #pragma warning( disable : 4251 ) //warning C4251: 'SerialAnalyzer::<...>' : class <...> needs to have dll-interface to be used by clients of class
 protected:  //vars
-	std::auto_ptr< SpiAnalyzerSettings > mSettings;
-	std::auto_ptr< SpiAnalyzerResults > mResults;
+	std::auto_ptr< SpiExAnalyzerSettings > mSettings;
+	std::auto_ptr< SpiExAnalyzerResults > mResults;
 	bool mSimulationInitilized;
-	SpiSimulationDataGenerator mSimulationDataGenerator;
+	SpiExSimulationDataGenerator mSimulationDataGenerator;
 
 	AnalyzerChannelData* mMosi; 
 	AnalyzerChannelData* mMiso;
 	AnalyzerChannelData* mClock;
 	AnalyzerChannelData* mEnable;
+	AnalyzerChannelData* mDC;
 
 	U64 mCurrentSample;
 	AnalyzerResults::MarkerType mArrowMarker;

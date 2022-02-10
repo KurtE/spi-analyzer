@@ -3,19 +3,19 @@
 
 #include <AnalyzerHelpers.h>
 
-class SpiAnalyzerSettings;
+class SpiExAnalyzerSettings;
 
-class SpiSimulationDataGenerator
+class SpiExSimulationDataGenerator
 {
 public:
-	SpiSimulationDataGenerator();
-	~SpiSimulationDataGenerator();
+	SpiExSimulationDataGenerator();
+	~SpiExSimulationDataGenerator();
 
-	void Initialize( U32 simulation_sample_rate, SpiAnalyzerSettings* settings );
+	void Initialize( U32 simulation_sample_rate, SpiExAnalyzerSettings* settings );
 	U32 GenerateSimulationData( U64 newest_sample_requested, U32 sample_rate, SimulationChannelDescriptor** simulation_channels );
 
 protected:
-	SpiAnalyzerSettings* mSettings;
+	SpiExAnalyzerSettings* mSettings;
 	U32 mSimulationSampleRateHz;
 	U64 mValue;
 

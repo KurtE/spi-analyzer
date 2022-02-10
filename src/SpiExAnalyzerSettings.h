@@ -4,11 +4,11 @@
 #include <AnalyzerSettings.h>
 #include <AnalyzerTypes.h>
 
-class SpiAnalyzerSettings : public AnalyzerSettings
+class SpiExAnalyzerSettings : public AnalyzerSettings
 {
 public:
-	SpiAnalyzerSettings();
-	virtual ~SpiAnalyzerSettings();
+	SpiExAnalyzerSettings();
+	virtual ~SpiExAnalyzerSettings();
 
 	virtual bool SetSettingsFromInterfaces();
 	virtual void LoadSettings( const char* settings );
@@ -20,6 +20,7 @@ public:
 	Channel mMisoChannel;
 	Channel mClockChannel;
 	Channel mEnableChannel;
+	Channel mDCChannel;
 	AnalyzerEnums::ShiftOrder mShiftOrder;
 	U32 mBitsPerTransfer;
 	BitState mClockInactiveState;
@@ -32,6 +33,7 @@ protected:
 	std::auto_ptr< AnalyzerSettingInterfaceChannel >	mMisoChannelInterface;
 	std::auto_ptr< AnalyzerSettingInterfaceChannel >	mClockChannelInterface;
 	std::auto_ptr< AnalyzerSettingInterfaceChannel >	mEnableChannelInterface;
+	std::auto_ptr< AnalyzerSettingInterfaceChannel >	mDCChannelInterface;
 	std::auto_ptr< AnalyzerSettingInterfaceNumberList > mShiftOrderInterface;
 	std::auto_ptr< AnalyzerSettingInterfaceNumberList > mBitsPerTransferInterface;
 	std::auto_ptr< AnalyzerSettingInterfaceNumberList > mClockInactiveStateInterface;

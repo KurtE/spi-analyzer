@@ -1,15 +1,15 @@
-#include "SpiSimulationDataGenerator.h"
-#include "SpiAnalyzerSettings.h"
+#include "SpiExSimulationDataGenerator.h"
+#include "SpiExAnalyzerSettings.h"
 
-SpiSimulationDataGenerator::SpiSimulationDataGenerator()
+SpiExSimulationDataGenerator::SpiExSimulationDataGenerator()
 {
 }
 
-SpiSimulationDataGenerator::~SpiSimulationDataGenerator()
+SpiExSimulationDataGenerator::~SpiExSimulationDataGenerator()
 {
 }
 
-void SpiSimulationDataGenerator::Initialize( U32 simulation_sample_rate, SpiAnalyzerSettings* settings )
+void SpiExSimulationDataGenerator::Initialize( U32 simulation_sample_rate, SpiExAnalyzerSettings* settings )
 {
 	mSimulationSampleRateHz = simulation_sample_rate;
 	mSettings = settings;
@@ -38,7 +38,7 @@ void SpiSimulationDataGenerator::Initialize( U32 simulation_sample_rate, SpiAnal
 	mValue = 0;
 }
 
-U32 SpiSimulationDataGenerator::GenerateSimulationData( U64 largest_sample_requested, U32 sample_rate, SimulationChannelDescriptor** simulation_channels )
+U32 SpiExSimulationDataGenerator::GenerateSimulationData( U64 largest_sample_requested, U32 sample_rate, SimulationChannelDescriptor** simulation_channels )
 {
 	U64 adjusted_largest_sample_requested = AnalyzerHelpers::AdjustSimulationTargetSample( largest_sample_requested, sample_rate, mSimulationSampleRateHz );
 
@@ -53,7 +53,7 @@ U32 SpiSimulationDataGenerator::GenerateSimulationData( U64 largest_sample_reque
 	return mSpiSimulationChannels.GetCount();
 }
 
-void SpiSimulationDataGenerator::CreateSpiTransaction()
+void SpiExSimulationDataGenerator::CreateSpiTransaction()
 {
 	if( mEnable != NULL )
 		mEnable->Transition();
@@ -95,7 +95,7 @@ void SpiSimulationDataGenerator::CreateSpiTransaction()
 	}
 }
 
-void SpiSimulationDataGenerator::OutputWord_CPHA0( U64 mosi_data, U64 miso_data )
+void SpiExSimulationDataGenerator::OutputWord_CPHA0( U64 mosi_data, U64 miso_data )
 {
 	BitExtractor mosi_bits( mosi_data, mSettings->mShiftOrder, mSettings->mBitsPerTransfer );
 	BitExtractor miso_bits( miso_data, mSettings->mShiftOrder, mSettings->mBitsPerTransfer );
@@ -125,7 +125,7 @@ void SpiSimulationDataGenerator::OutputWord_CPHA0( U64 mosi_data, U64 miso_data 
 	mSpiSimulationChannels.AdvanceAll( mClockGenerator.AdvanceByHalfPeriod( 2.0 ) );
 }
 
-void SpiSimulationDataGenerator::OutputWord_CPHA1( U64 mosi_data, U64 miso_data )
+void SpiExSimulationDataGenerator::OutputWord_CPHA1( U64 mosi_data, U64 miso_data )
 {
 	BitExtractor mosi_bits( mosi_data, mSettings->mShiftOrder, mSettings->mBitsPerTransfer );
 	BitExtractor miso_bits( miso_data, mSettings->mShiftOrder, mSettings->mBitsPerTransfer );
