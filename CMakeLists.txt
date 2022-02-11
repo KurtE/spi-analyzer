@@ -12,14 +12,14 @@ set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 include(ExternalAnalyzerSDK)
 
 set(SOURCES 
-src/SpiAnalyzer.cpp
-src/SpiAnalyzer.h
-src/SpiAnalyzerResults.cpp
-src/SpiAnalyzerResults.h
-src/SpiAnalyzerSettings.cpp
-src/SpiAnalyzerSettings.h
-src/SpiSimulationDataGenerator.cpp
-src/SpiSimulationDataGenerator.h
+src/SpiExAnalyzer.cpp
+src/SpiExAnalyzer.h
+src/SpiExAnalyzerResults.cpp
+src/SpiExAnalyzerResults.h
+src/SpiExAnalyzerSettings.cpp
+src/SpiExAnalyzerSettings.h
+src/SpiExSimulationDataGenerator.cpp
+src/SpiExSimulationDataGenerator.h
 )
 
-add_analyzer_plugin(spi_analyzer SOURCES ${SOURCES})
+add_analyzer_plugin(spiex_analyzer SOURCES ${SOURCES})

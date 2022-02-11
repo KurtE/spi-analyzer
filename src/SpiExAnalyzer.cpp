@@ -1,42 +1,48 @@
 ﻿
-#include "SpiAnalyzer.h"
-#include "SpiAnalyzerSettings.h"
+#include "SpiExAnalyzer.h"
+#include "SpiExAnalyzerSettings.h"
 
 #include <AnalyzerChannelData.h>
 
 
 // enum SpiBubbleType { SpiData, SpiError };
 
-SpiAnalyzer::SpiAnalyzer()
+SpiExAnalyzer::SpiExAnalyzer()
     : Analyzer2(),
-      mSettings( new SpiAnalyzerSettings() ),
+      mSettings( new SpiExAnalyzerSettings() ),
       mSimulationInitilized( false ),
       mMosi( NULL ),
       mMiso( NULL ),
       mClock( NULL ),
-      mEnable( NULL )
+	mEnable( NULL ),
+	mDC (NULL),
+	mCurrentSample( 0 ),
+	mArrowMarker (AnalyzerResults::Dot)
+
 {
     SetAnalyzerSettings( mSettings.get() );
     UseFrameV2();
 }
 
-SpiAnalyzer::~SpiAnalyzer()
+SpiExAnalyzer::~SpiExAnalyzer()
 {
     KillThread();
 }
 
-void SpiAnalyzer::SetupResults()
+void SpiExAnalyzer::SetupResults()
 {
-    mResults.reset( new SpiAnalyzerResults( this, mSettings.get() ) );
+    mResults.reset( new SpiExAnalyzerResults( this, mSettings.get() ) );
     SetAnalyzerResults( mResults.get() );
 
     if( mSettings->mMosiChannel != UNDEFINED_CHANNEL )
         mResults->AddChannelBubblesWillAppearOn( mSettings->mMosiChannel );
     if( mSettings->mMisoChannel != UNDEFINED_CHANNEL )
         mResults->AddChannelBubblesWillAppearOn( mSettings->mMisoChannel );
+	if (mSettings->mDCChannel != UNDEFINED_CHANNEL)
+		mResults->AddChannelBubblesWillAppearOn(mSettings->mDCChannel);
 }
 
-void SpiAnalyzer::WorkerThread()
+void SpiExAnalyzer::WorkerThread()
 {
     Setup();
 
@@ -49,7 +55,7 @@ void SpiAnalyzer::WorkerThread()
     }
 }
 
-void SpiAnalyzer::AdvanceToActiveEnableEdgeWithCorrectClockPolarity()
+void SpiExAnalyzer::AdvanceToActiveEnableEdgeWithCorrectClockPolarity()
 {
     mResults->CommitPacketAndStartNewPacket();
     mResults->CommitResults();
@@ -70,7 +76,7 @@ void SpiAnalyzer::AdvanceToActiveEnableEdgeWithCorrectClockPolarity()
     }
 }
 
-void SpiAnalyzer::Setup()
+void SpiExAnalyzer::Setup()
 {
     bool allow_last_trailing_clock_edge_to_fall_outside_enable = false;
     if( mSettings->mDataValidEdge == AnalyzerEnums::LeadingEdge )
@@ -109,9 +115,14 @@ void SpiAnalyzer::Setup()
         mEnable = GetAnalyzerChannelData( mSettings->mEnableChannel );
     else
         mEnable = NULL;
+
+	if (mSettings->mDCChannel != UNDEFINED_CHANNEL)
+		mDC = GetAnalyzerChannelData(mSettings->mDCChannel);
+	else
+		mDC = NULL;
 }
 
-void SpiAnalyzer::AdvanceToActiveEnableEdge()
+void SpiExAnalyzer::AdvanceToActiveEnableEdge()
 {
     if( mEnable != NULL )
     {
@@ -133,7 +144,7 @@ void SpiAnalyzer::AdvanceToActiveEnableEdge()
     }
 }
 
-bool SpiAnalyzer::IsInitialClockPolarityCorrect()
+bool SpiExAnalyzer::IsInitialClockPolarityCorrect()
 {
     if( mClock->GetBitState() == mSettings->mClockInactiveState )
         return true;
@@ -173,7 +184,7 @@ bool SpiAnalyzer::IsInitialClockPolarityCorrect()
     }
 }
 
-bool SpiAnalyzer::WouldAdvancingTheClockToggleEnable( bool add_disable_frame, U64* disable_frame )
+bool SpiExAnalyzer::WouldAdvancingTheClockToggleEnable( bool add_disable_frame, U64* disable_frame )
 {
     if( mEnable == NULL )
         return false;
@@ -222,7 +233,7 @@ bool SpiAnalyzer::WouldAdvancingTheClockToggleEnable( bool add_disable_frame, U6
         return true;
 }
 
-void SpiAnalyzer::GetWord()
+void SpiExAnalyzer::GetWord()
 {
     // we're assuming we come into this function with the clock in the idle state;
 
@@ -234,6 +245,9 @@ void SpiAnalyzer::GetWord()
 
     U64 miso_word = 0;
     mMisoResult.Reset( &miso_word, mSettings->mShiftOrder, bits_per_transfer );
+
+	U64 dc_word = 0;
+    mDCResult.Reset( &dc_word, mSettings->mShiftOrder, 1 );
 
     U64 first_sample = 0;
     bool need_reset = false;
@@ -274,6 +288,12 @@ void SpiAnalyzer::GetWord()
                 mMiso->AdvanceToAbsPosition( mCurrentSample );
                 mMisoResult.AddBit( mMiso->GetBitState() );
             }
+            if ((mDC != NULL) && (i == 0))
+			{
+				mDC->AdvanceToAbsPosition(mCurrentSample);
+                mDCResult.AddBit( mDC->GetBitState() );
+			}
+
             mArrowLocations.push_back( mCurrentSample );
         }
 
@@ -319,6 +339,12 @@ void SpiAnalyzer::GetWord()
                 mMiso->AdvanceToAbsPosition( mCurrentSample );
                 mMisoResult.AddBit( mMiso->GetBitState() );
             }
+            if ((mDC != NULL) && (i == 0))
+			{
+				mDC->AdvanceToAbsPosition(mCurrentSample);
+                mDCResult.AddBit( mDC->GetBitState() );
+			}
+
             mArrowLocations.push_back( mCurrentSample );
         }
     }
@@ -334,6 +360,10 @@ void SpiAnalyzer::GetWord()
     result_frame.mData1 = mosi_word;
     result_frame.mData2 = miso_word;
     result_frame.mFlags = 0;
+	if (dc_word) {
+		//result_frame.mFlags = SPI_DC_FLAG;
+		result_frame.mData2 |= 0x8000000000000000ull;
+	}
     mResults->AddFrame( result_frame );
 
     FrameV2 framev2;
@@ -349,6 +379,7 @@ void SpiAnalyzer::GetWord()
     }
     framev2.AddByteArray( "mosi", mosi_bytearray, bytes_per_transfer );
     framev2.AddByteArray( "miso", miso_bytearray, bytes_per_transfer );
+    framev2.AddByte( "dc", (U8)dc_word );
 
     mResults->AddFrameV2( framev2, "result", first_sample, mClock->GetSampleNumber() + 1 );
 
@@ -362,12 +393,12 @@ void SpiAnalyzer::GetWord()
     }
 }
 
-bool SpiAnalyzer::NeedsRerun()
+bool SpiExAnalyzer::NeedsRerun()
 {
     return false;
 }
 
-U32 SpiAnalyzer::GenerateSimulationData( U64 minimum_sample_index, U32 device_sample_rate,
+U32 SpiExAnalyzer::GenerateSimulationData( U64 minimum_sample_index, U32 device_sample_rate,
                                          SimulationChannelDescriptor** simulation_channels )
 {
     if( mSimulationInitilized == false )
@@ -380,24 +411,24 @@ U32 SpiAnalyzer::GenerateSimulationData( U64 minimum_sample_index, U32 device_sa
 }
 
 
-U32 SpiAnalyzer::GetMinimumSampleRateHz()
+U32 SpiExAnalyzer::GetMinimumSampleRateHz()
 {
     return 10000; // we don't have any idea, depends on the SPI rate, etc.; return the lowest rate.
 }
 
-const char* SpiAnalyzer::GetAnalyzerName() const
+const char* SpiExAnalyzer::GetAnalyzerName() const
 {
-    return "SPI";
+	return "SPIEx";
 }
 
 const char* GetAnalyzerName()
 {
-    return "SPI";
+	return "SPIEx";
 }
 
 Analyzer* CreateAnalyzer()
 {
-    return new SpiAnalyzer();
+    return new SpiExAnalyzer();
 }
 
 void DestroyAnalyzer( Analyzer* analyzer )

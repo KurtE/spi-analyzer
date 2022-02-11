@@ -5,14 +5,14 @@
 
 #define SPI_ERROR_FLAG ( 1 << 0 )
 
-class SpiAnalyzer;
-class SpiAnalyzerSettings;
+class SpiExAnalyzer;
+class SpiExAnalyzerSettings;
 
-class SpiAnalyzerResults : public AnalyzerResults
+class SpiExAnalyzerResults : public AnalyzerResults
 {
   public:
-    SpiAnalyzerResults( SpiAnalyzer* analyzer, SpiAnalyzerSettings* settings );
-    virtual ~SpiAnalyzerResults();
+    SpiExAnalyzerResults( SpiExAnalyzer* analyzer, SpiExAnalyzerSettings* settings );
+    virtual ~SpiExAnalyzerResults();
 
     virtual void GenerateBubbleText( U64 frame_index, Channel& channel, DisplayBase display_base );
     virtual void GenerateExportFile( const char* file, DisplayBase display_base, U32 export_type_user_id );
@@ -23,8 +23,8 @@ class SpiAnalyzerResults : public AnalyzerResults
 
   protected: // functions
   protected: // vars
-    SpiAnalyzerSettings* mSettings;
-    SpiAnalyzer* mAnalyzer;
+    SpiExAnalyzerSettings* mSettings;
+    SpiExAnalyzer* mAnalyzer;
 };
 
 #endif // SPI_ANALYZER_RESULTS
