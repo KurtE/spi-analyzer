@@ -1,5 +1,5 @@
 cmake_minimum_required (VERSION 3.11)
-project(spi_analyzer)
+project(spiex_analyzer)
 
 add_definitions( -DLOGIC2 )
 
