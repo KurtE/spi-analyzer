@@ -33,14 +33,13 @@ void SpiExAnalyzerResults::GenerateBubbleText( U64 frame_index, Channel& channel
         else if (channel == mSettings->mMisoChannel)
         {
             char number_str[ 128 ];
-            AnalyzerHelpers::GetNumberString( frame.mData2 & 0x7fffffffffffffffull, display_base, mSettings->mBitsPerTransfer, number_str,
-                                              128 );
+            AnalyzerHelpers::GetNumberString( frame.mData2, display_base, mSettings->mBitsPerTransfer, number_str, 128 );
             AddResultString( number_str );
         }
 		else if (channel == mSettings->mDCChannel)
 		{
 			char number_str[128];
-			AnalyzerHelpers::GetNumberString(frame.mData2 >> 63, display_base, 1, number_str, 128);
+            AnalyzerHelpers::GetNumberString( frame.mFlags = SPI_DC_FLAG, display_base, 1, number_str, 128 );
 			AddResultString(number_str);
 		}
     }
@@ -98,7 +97,7 @@ void SpiExAnalyzerResults::GenerateExportFile( const char* file, DisplayBase dis
             AnalyzerHelpers::GetNumberString( frame.mData2, display_base, mSettings->mBitsPerTransfer, miso_str, 128 );
 		char dc_str[128] = "";
 		if (dc_used == true)
-			AnalyzerHelpers::GetNumberString( frame.mData2 >> 63, display_base, 1, dc_str, 128);
+            AnalyzerHelpers::GetNumberString( frame.mFlags = SPI_DC_FLAG, display_base, 1, dc_str, 128 );
 
         U64 packet_id = GetPacketContainingFrameSequential( i );
         if( packet_id != INVALID_RESULT_INDEX )
@@ -149,9 +148,9 @@ void SpiExAnalyzerResults::GenerateFrameTabularText( U64 frame_index, DisplayBas
         if( mosi_used == true )
             AnalyzerHelpers::GetNumberString( frame.mData1, display_base, mSettings->mBitsPerTransfer, mosi_str, 128 );
         if( miso_used == true )
-            AnalyzerHelpers::GetNumberString( frame.mData2 & 0x7fffffffffffffffull, display_base, mSettings->mBitsPerTransfer, miso_str, 128 );
+            AnalyzerHelpers::GetNumberString( frame.mData2, display_base, mSettings->mBitsPerTransfer, miso_str, 128 );
 		if (dc_used == true)
-			AnalyzerHelpers::GetNumberString(frame.mData2 >> 63, display_base, 1, dc_str, 128);
+            AnalyzerHelpers::GetNumberString( frame.mFlags = SPI_DC_FLAG, display_base, 1, dc_str, 128 );
 
 		bool field_output = false;
 		if (mosi_used == true)

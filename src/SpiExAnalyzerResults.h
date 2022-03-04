@@ -3,7 +3,8 @@
 
 #include <AnalyzerResults.h>
 
-#define SPI_ERROR_FLAG ( 1 << 0 )
+#define SPI_ERROR_FLAG ( 1 << 7 )
+#define SPI_DC_FLAG (1 << 0)
 
 class SpiExAnalyzer;
 class SpiExAnalyzerSettings;

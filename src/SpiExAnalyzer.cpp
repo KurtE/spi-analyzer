@@ -160,7 +160,7 @@ bool SpiExAnalyzer::IsInitialClockPolarityCorrect()
         mCurrentSample = mEnable->GetSampleNumber();
 
         error_frame.mEndingSampleInclusive = mCurrentSample;
-        error_frame.mFlags = SPI_ERROR_FLAG | DISPLAY_AS_ERROR_FLAG;
+        error_frame.mFlags = SPI_ERROR_FLAG;
         mResults->AddFrame( error_frame );
 
         FrameV2 framev2;
@@ -361,8 +361,7 @@ void SpiExAnalyzer::GetWord()
     result_frame.mData2 = miso_word;
     result_frame.mFlags = 0;
 	if (dc_word) {
-		//result_frame.mFlags = SPI_DC_FLAG;
-		result_frame.mData2 |= 0x8000000000000000ull;
+		result_frame.mFlags = SPI_DC_FLAG;
 	}
     mResults->AddFrame( result_frame );
 
