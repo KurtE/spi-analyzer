@@ -1,6 +1,10 @@
-# Saleae Serial Peripheral Interface (SPI) Analyzer
+# Extended Serial Peripheral Interface (SPIEx) Analyzer
 
+This is a slightly extended version of the
 Saleae Serial Peripheral Interface (SPI) Analyzer
+Where you specify another IO pin as the Data/Command (DC) pin.
+Which is useful for developing HLAs for different devices, 
+mainly display drivers.
 
 ## Getting Started
 
@@ -82,7 +86,7 @@ cd build -A x64
 cmake ..
 ```
 
-Then, open the newly created solution file located here: `build\spi_analyzer.sln`
+Then, open the newly created solution file located here: `build\spiex_analyzer.sln`
 
 
 ## Output Frame Format
@@ -109,6 +113,7 @@ Indicates the enable signal has transitioned back to inactive, present when the 
 | :--- | :--- | :--- |
 | `miso` | bytes | Master in slave out, width in bits is determined by settings |
 | `mosi` | bytes | Master out slave in, width in bits is determined by settings |
+| `dc`  | byte  | Data/Command state at start of the word capture |
 
 A single word transaction, containing both MISO and MOSI
 
